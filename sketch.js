@@ -114,15 +114,16 @@ class Game{ //ゲームのロジック
         this.lastDropTime = millis();
     }
 
-    update(){ //処理未完成
+    update(){
         if(millis() - this.lastDropTime > this.dropInterval){
             this.lastDropTime = millis();
+
             if(!this.move(0, 1)){
                 this.board.fix(this.current);
                 this.board.clearLines();
                 this.spawnNext();
+
                 if(!this.board.canSpawn(this.current)){ //ゲームオーバー
-                    this.state = new GameOverState();
                 }
             }
         }
@@ -138,15 +139,15 @@ class Game{ //ゲームのロジック
     }
 
     rotateRight(){ //右回転
-        const rotated = this.current.cloneRotatedRight();
-        if(this.board.canPlace(rotated)){
+        const rotated = this.current.rotateRight(this.board);
+        if(rotated){
             this.current = rotated;
         }
     }
 
     rotateLeft(){ //左回転
-        const rotated = this.current.cloneRotatedLeft();
-        if(this.board.canPlace(rotated)){
+        const rotated = this.current.rotateLeft(this.board);
+        if(rotated){
             this.current = rotated;
         }
     }
@@ -195,7 +196,7 @@ class Polyomino{ //ブロックの基本操作
 
     }
 
-    getPosition(){ //形から座標を取得
+    getPos(){ //座標を取得
         return this.shape.map(([sx, sy]) => [this.x + sx, this.y + sy]);
     }
 
@@ -240,9 +241,74 @@ class Polyomino{ //ブロックの基本操作
     }
 }
 
-class Tetromino extends Polyomino{ //ここにSRSを実装
+class Tetromino extends Polyomino{
     constructor(type, shape, color, center, x, y){
         super(type, shape, color, center, x, y);
+        this.rotState = 0; //回転状態
+    }
+
+    static SRS = {
+        "0>R": [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+        "R>0": [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+
+        "R>2": [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+        "2>R": [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+
+        "2>L": [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+        "L>2": [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+
+        "L>0": [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+        "0>L": [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    };
+
+    static SRS_I = {
+        "0>R": [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+        "R>0": [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+
+        "R>2": [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+        "2>R": [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+
+        "2>L": [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+        "L>2": [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+
+        "L>0": [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+        "0>L": [[0,0],[-1,0],[2,0],[-1,2],[2,-1]]
+    };
+
+    static rotKey = ["0", "R", "2", "L"];
+
+    rotateRight(board){ //右回転
+        const old = this.rotState; //現在の回転状態
+        const next = (this.rotState + 1) % 4; //次の回転状態
+
+        const key = `${Tetromino.rotKey[old]}>${Tetromino.rotKey[next]}`;
+        const table = (this.type === "I") ? Tetromino.SRS_I : Tetromino.SRS;
+
+        const rotated = this.cloneRotatedRight();
+        for(const [dx, dy] of table[key]){
+            const moved = rotated.cloneMoved(dx, dy);
+            if(board.canPlace(moved)){
+                moved.rotState = next;
+                return moved;
+            }
+        }
+    }
+
+    rotateLeft(board){ //左回転
+        const old = this.rotState;
+        const next = (this.rotState + 3) % 4;
+
+        const key = `${Tetromino.rotKey[old]}>${Tetromino.rotKey[next]}`; //キーを生成
+        const table = (this.type === "I") ? Tetromino.SRS_I : Tetromino.SRS;
+
+        const rotated = this.cloneRotatedLeft();
+        for(const [dx, dy] of table[key]){
+            const moved = rotated.cloneMoved(dx, dy);
+            if(board.canPlace(moved)){
+                moved.rotState = next;
+                return moved;
+            }
+        }
     }
 }
 
@@ -323,7 +389,7 @@ class Board{
     }
 
     fix(polyomino){ //ブロックを固定
-        for(const [x, y] of polyomino.getPosition()){
+        for(const [x, y] of polyomino.getPos()){
             if(
                 x >= 0 && x < this.width &&
                 y >= 0 && y < this.height
@@ -346,9 +412,14 @@ class Board{
     }
 
     canPlace(polyomino){ //配置可能か
-        for(const [x, y] of polyomino.getPosition()){
+        for(const [x, y] of polyomino.getPos()){
+            if(y >= this.height) return false;
+            if(x < 0 || x >= this.width) return false;
+            if(y >= 0 && this.grid[y][x]) return false;
+            /*
             if (x < 0 || x >= this.width || y >= this.height) return false;
             if (y >= 0 && this.grid[y][x]) return false;
+            */
         }
         return true;
     }
@@ -392,7 +463,7 @@ class Renderer{ //描画処理
         stroke(0);
         strokeWeight(1);
 
-        for(const [x, y] of polyomino.getPosition()){
+        for(const [x, y] of polyomino.getPos()){
             rect(
                 x * this.blockSize,
                 y * this.blockSize,
@@ -473,7 +544,7 @@ class InputHandler{ //入力処理
 }
 
 //自分でやること
-//SRSの実装(これで基礎は完成)
+//SRSの実装(左側で壁キックされないバグが発生)
 //完成したコードのファイル分け
 //Mementoパターンによる差し戻し機能の追加
 //MementoとCommandの併用によるリプレイの逆再生
