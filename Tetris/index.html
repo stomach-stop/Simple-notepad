@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>p5 single JS</title>
+
+  <!-- p5.js（CDN） -->
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+
+  <!-- ファイル分割：順番が大事 -->
+  <script src="Board.js"></script>
+  <script src="Factory.js"></script>
+  <script src="Game.js"></script>
+  <script src="GameManager.js"></script>
+  <script src="GameState.js"></script>
+  <script src="InputHandler.js"></script>
+  <script src="PlayState.js"></script>
+  <script src="Polyomino.js"></script>
+  <script src="Renderer.js"></script>
+  <script src="Tetromino.js"></script>
+  <script src="TetrominoFactory.js"></script>
+
+  <!-- 最後に sketch.js -->
+  <script src="sketch.js"></script>
+</head>
+<body>
+  <!-- p5 が自動で canvas を作成 -->
+</body>
+</html>
