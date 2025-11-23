@@ -6,7 +6,7 @@ class Polyomino{ //ブロックの基本操作
         this.center = center; //回転の中心
         this.x = x; //初期座標
         this.y = y;
-
+        this.rotState = 0; //回転状態
     }
 
     getPos(){ //座標を取得
@@ -14,7 +14,7 @@ class Polyomino{ //ブロックの基本操作
     }
 
     clone(){ //コピーを返す
-        return new this.constructor(
+        const clone = new this.constructor(
             this.type,
             this.shape.map(([sx, sy]) => [sx, sy]),
             this.color,
@@ -22,6 +22,8 @@ class Polyomino{ //ブロックの基本操作
             this.x,
             this.y
         );
+        clone.rotState = this.rotState;
+        return clone;
     }
 
     cloneMoved(dx, dy){ //移動したコピーを返す
