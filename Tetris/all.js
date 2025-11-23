@@ -71,14 +71,21 @@ class GameManager{ //ゲームの状態遷移
     }
 }
 
-class GameState{ //Stateパターン
-    enter(manager){} //状態に入ったときの処理
-    update(){} //毎フレームの処理
-    render(){} //描画処理
+class State{ //Stateパターン
+    enter(manager){ //状態に入ったときの処理
+        throw new Error("enter method must be implemented.");
+    }
+    update(){ //毎フレームの処理
+        throw new Error("update method must be implemented.");
+    }
+    render(){ //描画処理
+        throw new Error("render method must be implemented.");
+    }
 }
 
-class MenuState extends GameState{}
-class PlayState extends GameState{
+class MenuState extends State{}
+
+class PlayState extends State{
     enter(manager){
         this.manager = manager;
         this.game = manager.game;
@@ -95,7 +102,8 @@ class PlayState extends GameState{
         this.renderer.drawPolyomino(this.game.ghost, 0.3);
     }
 }
-class GameOverState extends GameState{}
+
+class GameOverState extends State{}
 
 class Game{ //ゲームのロジック
     constructor(factory, board){
@@ -114,7 +122,7 @@ class Game{ //ゲームのロジック
         this.lastDropTime = millis();
     }
 
-    update(){
+    update(){ //ゲームの進行
         if(millis() - this.lastDropTime > this.dropInterval){
             this.lastDropTime = millis();
 
@@ -185,7 +193,7 @@ class Game{ //ゲームのロジック
     }
 }
 
-class Polyomino{ //ブロックの基本操作
+class Polyomino{ //ブロックの情報を取得
     constructor(type, shape, color, center, x = 4, y = 0){
         this.type = type; //ブロックの種類
         this.shape = shape; //ブロックの形
@@ -195,6 +203,8 @@ class Polyomino{ //ブロックの基本操作
         this.y = y;
         this.rotState = 0; //回転状態
     }
+
+    static rotKey = ["0", "R", "2", "L"];
 
     getPos(){ //座標を取得
         return this.shape.map(([sx, sy]) => [this.x + sx, this.y + sy]);
@@ -241,9 +251,43 @@ class Polyomino{ //ブロックの基本操作
         });
         return clone;
     }
+
+    rotateRight(board){ //右回転
+        const old = this.rotState; //現在の回転状態
+        const next = (this.rotState + 1) % 4; //次の回転状態
+
+        const key = `${Polyomino.rotKey[old]}>${Polyomino.rotKey[next]}`; //キーを生成
+        const table = this.getTable(); //テーブルを適用
+
+        const rotated = this.cloneRotatedRight();
+        for(const [dx, dy] of table[key]){
+            const moved = rotated.cloneMoved(dx, dy);
+            if(board.canPlace(moved)){
+                moved.rotState = next;
+                return moved;
+            }
+        }
+    }
+
+    rotateLeft(board){ //左回転
+        const old = this.rotState;
+        const next = (this.rotState + 3) % 4;
+
+        const key = `${Polyomino.rotKey[old]}>${Polyomino.rotKey[next]}`; //キーを生成
+        const table = this.getTable();
+
+        const rotated = this.cloneRotatedLeft();
+        for(const [dx, dy] of table[key]){
+            const moved = rotated.cloneMoved(dx, dy);
+            if(board.canPlace(moved)){
+                moved.rotState = next;
+                return moved;
+            }
+        }
+    }
 }
 
-class Tetromino extends Polyomino{ //SRS表
+class Tetromino extends Polyomino{ //SRS
     constructor(type, shape, color, center, x, y){
         super(type, shape, color, center, x, y);
     }
@@ -276,44 +320,13 @@ class Tetromino extends Polyomino{ //SRS表
         "0>L": [[0,0],[-1,0],[2,0],[-1,-2],[2,1]]
     };
 
-    static rotKey = ["0", "R", "2", "L"];
-
-    rotateRight(board){ //右回転
-        const old = this.rotState; //現在の回転状態
-        const next = (this.rotState + 1) % 4; //次の回転状態
-
-        const key = `${Tetromino.rotKey[old]}>${Tetromino.rotKey[next]}`;
-        const table = (this.type === "I") ? Tetromino.SRS_I : Tetromino.SRS;
-
-        const rotated = this.cloneRotatedRight();
-        for(const [dx, dy] of table[key]){
-            const moved = rotated.cloneMoved(dx, dy);
-            if(board.canPlace(moved)){
-                moved.rotState = next;
-                return moved;
-            }
-        }
-    }
-
-    rotateLeft(board){ //左回転
-        const old = this.rotState;
-        const next = (this.rotState + 3) % 4;
-
-        const key = `${Tetromino.rotKey[old]}>${Tetromino.rotKey[next]}`; //キーを生成
-        const table = (this.type === "I") ? Tetromino.SRS_I : Tetromino.SRS;
-
-        const rotated = this.cloneRotatedLeft();
-        for(const [dx, dy] of table[key]){
-            const moved = rotated.cloneMoved(dx, dy);
-            if(board.canPlace(moved)){
-                moved.rotState = next;
-                return moved;
-            }
-        }
+    getTable(){
+        return (this.type === "I") ? Tetromino.SRS_I : Tetromino.SRS;
     }
 }
 
 class Pentomino extends Polyomino{}
+
 class Hexomino extends Polyomino{}
 
 class Factory{ //Factoryパターン
@@ -374,6 +387,7 @@ class TetrominoFactory extends Factory{ //テトリミノのデータ
 }
 
 class PentominoFactory extends Factory{}
+
 class HexominoFactory extends Factory{}
 
 class Board{
@@ -417,10 +431,6 @@ class Board{
             if(y >= this.height) return false;
             if(x < 0 || x >= this.width) return false;
             if(y >= 0 && this.grid[y][x]) return false;
-            /*
-            if (x < 0 || x >= this.width || y >= this.height) return false;
-            if (y >= 0 && this.grid[y][x]) return false;
-            */
         }
         return true;
     }
@@ -511,7 +521,7 @@ class InputHandler{ //入力処理
         }
     }
 
-    handle(key){ //Commandパターンを使えばリプレイ機能を作れる
+    handle(key){
         switch(key){ //キーごとの操作
             case "w": while(this.game.move(0, 1)){} break;
             case "a": this.game.move(-1, 0); break;
@@ -541,5 +551,15 @@ class InputHandler{ //入力処理
     onKeyUp(key){ //キー情報の削除
         key = key.toLowerCase();
         delete this.pressed[key];
+    }
+}
+
+class Command{ //Commandパターン
+    constructor(){
+        this.game = this.game;
+    }
+
+    excute(){ //操作を実行
+        throw new Error("Execute method must be implemented.");
     }
 }
