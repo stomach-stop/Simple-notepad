@@ -110,6 +110,7 @@ class Game{ //ゲームのロジック
         this.factory = factory;
         this.board = board;
 
+        //ブロック関連
         this.current = this.factory.createSevenBag(); //今のブロック
         this.next = this.factory.createSevenBag(); //次のブロック
         this.hold = null; //ホールド枠
@@ -117,30 +118,39 @@ class Game{ //ゲームのロジック
         this.ghost; //ブロックの影
         this.updateGhost();
 
-        //仮設定
+        //落下設定
         this.dropInterval = 1000; //落下間隔
-        this.lastDropTime = millis();
+        this.lastDropTime = millis(); //落下記録
+        this.lockDelay = 500; //固定遅延
+        this.lockTimer = 0; //固定タイマー
+        this.lockMoveResets = 0; //延命回数
+        this.maxLockResets = 15; //延命回数の上限
+
+        //イベントを購読
+        eventBus.on("line-clear", ({lines}) => {
+            this.onLineClear(lines);
+        });
+        eventBus.on("piece-locked", () => {
+            this.onPieceLocked();
+        });
     }
 
-    update(){ //ゲームの進行
+    update(){ //ゲームの更新
         if(millis() - this.lastDropTime > this.dropInterval){
             this.lastDropTime = millis();
-
-            if(!this.move(0, 1)){
-                this.board.fix(this.current);
-                this.board.clearLines();
-                this.spawnNext();
-
-                if(!this.board.canSpawn(this.current)){ //ゲームオーバー
-                }
+            if(!this.move(0, 1)){ //落下できない
+                this.startLockDelay();
             }
         }
+        this.updateLockDelay();
     }
 
     move(dx, dy){ //移動
         const moved = this.current.cloneMoved(dx, dy);
         if(this.board.canPlace(moved)){ //動けるなら
             this.current = moved; //動いたデータで上書き
+            this.updateGhost();
+            this.resetLockDelay();
             return true;
         }
         return false;
@@ -148,16 +158,16 @@ class Game{ //ゲームのロジック
 
     rotateRight(){ //右回転
         const rotated = this.current.rotateRight(this.board);
-        if(rotated){
-            this.current = rotated;
-        }
+        this.current = rotated;
+        this.updateGhost();
+        this.resetLockDelay();
     }
 
     rotateLeft(){ //左回転
         const rotated = this.current.rotateLeft(this.board);
-        if(rotated){
-            this.current = rotated;
-        }
+        this.current = rotated;
+        this.updateGhost();
+        this.resetLockDelay();
     }
 
     spawnNext(){ //次のブロックを生成
@@ -190,6 +200,50 @@ class Game{ //ゲームのロジック
             clone = clone.cloneMoved(0, 1);
         }
         this.ghost = clone;
+    }
+
+    startLockDelay(){ //固定タイマーを開始
+        if(this.lockTimer == 0){
+            this.lockTimer = millis();
+            this.lockMoveResets = 0;
+        }
+    }
+
+    updateLockDelay(){
+        if(this.lockTimer == 0) return;
+        if(millis() - this.lockTimer >= this.lockDelay){
+            this.lockPiece();
+        }
+    }
+
+    resetLockDelay(){ //固定遅延のリセット
+        if(this.lockTimer > 0 &&
+            this.lockMoveResets < this.maxLockResets
+        ){
+            this.lockTimer = millis();
+            this.lockMoveResets++;
+        }
+    }
+
+    lockPiece(){ //ブロックの固定処理
+        this.board.fix(this.current);
+        const lines = this.board.clearLines();
+        this.lockTimer = 0;
+        this.lockMoveResets = 0;
+        
+    }
+
+    onLineClear(lines){ //スコア処理
+    }
+
+    onPieceLocked(){ //続行処理
+        this.spawnNext();
+        if(!this.board.canPlace(this.current)){
+            this.onGameOver();
+        }
+    }
+
+    onGameOver(){ //ゲームオーバー処理
     }
 }
 
@@ -390,6 +444,26 @@ class PentominoFactory extends Factory{}
 
 class HexominoFactory extends Factory{}
 
+class EventBus{ //イベントを管理
+    constructor(){
+        this.handlers = {}; //イベント名
+    }
+
+    on(type, handler){ //イベントを購読
+        (this.handlers[type] ??= []).push(handler);
+    }
+
+    off(type, handler){ //イベントの削除
+        this.handlers[type] = (this.handlers[type] ?? []).filter(h => h !== handler);
+    }
+
+    emit(type, payload){ //イベントを通知
+        (this.handlers[type] ?? []).forEach(h => h(payload));
+    }
+}
+
+const eventBus = new EventBus();
+
 class Board{
     constructor(width, height){
         this.width = width;
@@ -404,6 +478,8 @@ class Board{
     }
 
     fix(polyomino){ //ブロックを固定
+        if(!this.canPlace(polyomino)) return false;
+
         for(const [x, y] of polyomino.getPos()){
             if(
                 x >= 0 && x < this.width &&
@@ -415,15 +491,36 @@ class Board{
                 };
             }
         }
+        eventBus.emit("piece-locked", {type: polyomino.type});
     }
 
     clearLines(){ //埋まった行を削除
+        let linesCleared = 0;
+        for(let y = this.height - 1; y >= 0; y--){
+            if(this.grid[y].every(cell => cell)){
+                this.grid.splice(y, 1);
+                this.grid.unshift(Array(this.width).fill(null));
+                linesCleared++;
+                y++;
+            }
+        }
+        if(linesCleared > 0){
+            eventBus.emit("line-clear", {lines: linesCleared});
+        }
+        return linesCleared;
+        /* 旧仕様
         this.grid = this.grid.filter(row => row.some(cell => !cell));
         const linesCleared = this.height - this.grid.length;
+
+        if(linesCleared > 0){
+            eventBus.emit("line-clear", {lines: linesCleared});
+        }
+
         while(this.grid.length < this.height){
             this.grid.unshift(Array(this.width).fill(null));
         }
         return linesCleared;
+        */
     }
 
     canPlace(polyomino){ //配置可能か
@@ -531,7 +628,6 @@ class InputHandler{ //入力処理
             case "q": this.game.rotateLeft(); break;
             case "c": this.game.swapHold(); break;
         }
-        this.game.updateGhost();
     }
 
     onKeyDown(key){ //キーの入力処理
@@ -563,3 +659,19 @@ class Command{ //Commandパターン
         throw new Error("Execute method must be implemented.");
     }
 }
+
+/*
+メモ
+変更が怖いやつは変更前を囲って残してる。いつか消す。
+
+完成までに自分でやること
+EventBusの実装及びそれに伴う改善
+Mementoの実装及びリプレイ、差し戻し機能の実装
+アイテムの実装
+Gitの設定
+
+他の人に任せること
+ゲーム画面以外の状態を実装
+生成ルールの追加及びstratagyの実装
+設定変更のUI作り
+*/

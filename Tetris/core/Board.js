@@ -12,6 +12,8 @@ class Board{
     }
 
     fix(polyomino){ //ブロックを固定
+        if(!this.canPlace(polyomino)) return false;
+
         for(const [x, y] of polyomino.getPos()){
             if(
                 x >= 0 && x < this.width &&
@@ -23,13 +25,21 @@ class Board{
                 };
             }
         }
+        eventBus.emit("piece-locked", {type: polyomino.type});
     }
 
     clearLines(){ //埋まった行を削除
-        this.grid = this.grid.filter(row => row.some(cell => !cell));
-        const linesCleared = this.height - this.grid.length;
-        while(this.grid.length < this.height){
-            this.grid.unshift(Array(this.width).fill(null));
+        let linesCleared = 0;
+        for(let y = this.height - 1; y >= 0; y--){
+            if(this.grid[y].every(cell => cell)){
+                this.grid.splice(y, 1);
+                this.grid.unshift(Array(this.width).fill(null));
+                linesCleared++;
+                y++;
+            }
+        }
+        if(linesCleared > 0){
+            eventBus.emit("line-clear", {lines: linesCleared});
         }
         return linesCleared;
     }

@@ -90,8 +90,4 @@ class Polyomino{ //ブロックの情報を取得
             }
         }
     }
-
-    getTable(){
-        return null;
-    }
 }
