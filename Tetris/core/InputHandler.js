@@ -34,7 +34,12 @@ class InputHandler{ //入力処理
 
     handle(key){
         switch(key){ //キーごとの操作
-            case "w": while(this.game.move(0, 1)){} break;
+            case "w":
+                let dist = 0;
+                while(this.game.move(0, 1)) dist++;
+                this.game.lockPiece();
+                eventBus.emit("hard-drop", {dist});
+                break;
             case "a": this.game.move(-1, 0); break;
             case "s": this.game.move(0, 1); break;
             case "d": this.game.move(1, 0); break;

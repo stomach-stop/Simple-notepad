@@ -125,14 +125,6 @@ class Game{ //ゲームのロジック
         this.lockTimer = 0; //固定タイマー
         this.lockMoveResets = 0; //延命回数
         this.maxLockResets = 15; //延命回数の上限
-
-        //イベントを購読
-        eventBus.on("line-clear", ({lines}) => {
-            this.onLineClear(lines);
-        });
-        eventBus.on("piece-locked", () => {
-            this.onPieceLocked();
-        });
     }
 
     update(){ //ゲームの更新
@@ -175,6 +167,9 @@ class Game{ //ゲームのロジック
         this.next = this.factory.createSevenBag();
         this.canHold = true;
         this.updateGhost();
+        this.lockTimer = 0;
+        this.lockMoveResets = 0;
+        
     }
 
     swapHold(){ //ホールド枠のブロックと交換
@@ -227,23 +222,11 @@ class Game{ //ゲームのロジック
 
     lockPiece(){ //ブロックの固定処理
         this.board.fix(this.current);
-        const lines = this.board.clearLines();
-        this.lockTimer = 0;
-        this.lockMoveResets = 0;
-        
-    }
-
-    onLineClear(lines){ //スコア処理
-    }
-
-    onPieceLocked(){ //続行処理
+        this.board.clearLines();
         this.spawnNext();
         if(!this.board.canPlace(this.current)){
-            this.onGameOver();
+            eventBus.emit("game-over", {});
         }
-    }
-
-    onGameOver(){ //ゲームオーバー処理
     }
 }
 
@@ -508,19 +491,6 @@ class Board{
             eventBus.emit("line-clear", {lines: linesCleared});
         }
         return linesCleared;
-        /* 旧仕様
-        this.grid = this.grid.filter(row => row.some(cell => !cell));
-        const linesCleared = this.height - this.grid.length;
-
-        if(linesCleared > 0){
-            eventBus.emit("line-clear", {lines: linesCleared});
-        }
-
-        while(this.grid.length < this.height){
-            this.grid.unshift(Array(this.width).fill(null));
-        }
-        return linesCleared;
-        */
     }
 
     canPlace(polyomino){ //配置可能か
@@ -620,7 +590,12 @@ class InputHandler{ //入力処理
 
     handle(key){
         switch(key){ //キーごとの操作
-            case "w": while(this.game.move(0, 1)){} break;
+            case "w":
+                let dist = 0;
+                while(this.game.move(0, 1)) dist++;
+                this.game.lockPiece();
+                eventBus.emit("hard-drop", {dist});
+                break;
             case "a": this.game.move(-1, 0); break;
             case "s": this.game.move(0, 1); break;
             case "d": this.game.move(1, 0); break;
@@ -628,6 +603,7 @@ class InputHandler{ //入力処理
             case "q": this.game.rotateLeft(); break;
             case "c": this.game.swapHold(); break;
         }
+        this.game.updateGhost();
     }
 
     onKeyDown(key){ //キーの入力処理
@@ -661,9 +637,6 @@ class Command{ //Commandパターン
 }
 
 /*
-メモ
-変更が怖いやつは変更前を囲って残してる。いつか消す。
-
 完成までに自分でやること
 EventBusの実装及びそれに伴う改善
 Mementoの実装及びリプレイ、差し戻し機能の実装

@@ -18,14 +18,6 @@ class Game{ //ゲームのロジック
         this.lockTimer = 0; //固定タイマー
         this.lockMoveResets = 0; //延命回数
         this.maxLockResets = 15; //延命回数の上限
-
-        //イベントを購読
-        eventBus.on("line-clear", ({lines}) => {
-            this.onLineClear(lines);
-        });
-        eventBus.on("piece-locked", () => {
-            this.onPieceLocked();
-        });
     }
 
     update(){ //ゲームの更新
@@ -68,6 +60,8 @@ class Game{ //ゲームのロジック
         this.next = this.factory.createSevenBag();
         this.canHold = true;
         this.updateGhost();
+        this.lockTimer = 0;
+        this.lockMoveResets = 0;
         
     }
 
@@ -121,22 +115,10 @@ class Game{ //ゲームのロジック
 
     lockPiece(){ //ブロックの固定処理
         this.board.fix(this.current);
-        const lines = this.board.clearLines();
-        this.lockTimer = 0;
-        this.lockMoveResets = 0;
-        
-    }
-
-    onLineClear(lines){ //スコア処理
-    }
-
-    onPieceLocked(){ //続行処理
+        this.board.clearLines();
         this.spawnNext();
         if(!this.board.canPlace(this.current)){
-            this.onGameOver();
+            eventBus.emit("game-over", {});
         }
-    }
-
-    onGameOver(){ //ゲームオーバー処理
     }
 }
