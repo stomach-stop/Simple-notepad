@@ -20,8 +20,8 @@ function keyReleased(){
 }
 
 function createDisplay(){ //ゲーム画面を生成
-    const boardWidth = 16;
-    const boardHeight = 22;
+    const boardWidth = 10;
+    const boardHeight = 20;
 
     let blockSize = floor(min(
         windowWidth / boardWidth,

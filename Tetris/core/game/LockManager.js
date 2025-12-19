@@ -33,12 +33,21 @@ class LockManager{ //ブロックの固定制御
     }
 
     lockPiece(){ //ブロックの固定処理
-        const piece = this.poly.current;
-        this.board.fix(piece);
-        this.board.clearLines();
+        this.board.fix(this.poly.current);
+
+        const clear = this.board.clearLines();
+        // const spin = 
+
+        eventBus.emit("piece-locked", {
+            lines: clear.lines
+            /*
+            tspin: spin.tspin,
+            mini: spin.mini
+            */
+        });
         this.poly.spawnNext();
 
-        if(!this.board.canPlace(piece)){
+        if(!this.board.canPlace(this.poly.current)){
             eventBus.emit("game-over", {});
         }
     }

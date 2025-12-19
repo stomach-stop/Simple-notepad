@@ -28,6 +28,7 @@ class Game{ //ゲームの制御
     move(dx, dy) { return this.mover.move(dx, dy) }
     rotateLeft() { return this.mover.rotateLeft() }
     rotateRight() { return this.mover.rotateRight() }
+    spawnNext() { return this.poly.spawnNext()}
     swapHold() { return this.poly.swapHold() }
     updateGhost() { return this.poly.updateGhost() }
     lockPiece() { return this.lock.lockPiece() }
