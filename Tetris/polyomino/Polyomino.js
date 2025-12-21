@@ -1,9 +1,9 @@
 class Polyomino{ //ブロックの情報を取得
-    constructor(type, shape, color, center, x = 4, y = 0){
+    constructor(type, shape, center, color, x = 4, y = 0){
         this.type = type; //ブロックの種類
         this.shape = shape; //ブロックの形
-        this.color = color; //ブロックの色
         this.center = center; //回転の中心
+        this.color = color; //ブロックの色
         this.x = x; //初期座標
         this.y = y;
         this.rotState = 0; //回転状態
@@ -11,7 +11,7 @@ class Polyomino{ //ブロックの情報を取得
 
     static rotKey = ["0", "R", "2", "L"];
 
-    getPos(){ //座標を取得
+    get pos(){ //座標を取得
         return this.shape.map(([sx, sy]) => [this.x + sx, this.y + sy]);
     }
 
@@ -19,8 +19,8 @@ class Polyomino{ //ブロックの情報を取得
         const clone = new this.constructor(
             this.type,
             this.shape.map(([sx, sy]) => [sx, sy]),
-            this.color,
             this.center,
+            this.color,
             this.x,
             this.y
         );

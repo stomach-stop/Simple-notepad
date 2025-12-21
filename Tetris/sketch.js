@@ -19,6 +19,10 @@ function keyReleased(){
     handler.onKeyUp(key);
 }
 
+function mousePressed(){
+    handler.useItem();
+}
+
 function createDisplay(){ //ゲーム画面を生成
     const boardWidth = 10;
     const boardHeight = 20;
@@ -39,6 +43,7 @@ function createDisplay(){ //ゲーム画面を生成
     );
 
     manager.setBlockSize(blockSize);
+    handler.setBlockSize(blockSize);
 }
 
 function windowResized(){ //画面を再生成

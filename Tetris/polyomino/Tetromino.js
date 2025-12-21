@@ -1,6 +1,6 @@
 class Tetromino extends Polyomino{ //SRS
-    constructor(type, shape, color, center, x, y){
-        super(type, shape, color, center, x, y);
+    constructor(type, shape, center, color, x, y){
+        super(type, shape, center, color, x, y);
     }
 
     static SRS = {

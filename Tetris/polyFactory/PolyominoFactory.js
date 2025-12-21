@@ -3,11 +3,10 @@ class Factory{ //Factoryパターン
         this.bag = [];
     }
 
-    //生成ルールが増えたらStrategyパターンを適用
     create(type){ //ブロックを生成
         const {shape, center} = this.shapes[type];
         const color = this.colors[type];
-        return new this.Product(type, shape, color, center);
+        return new this.Product(type, shape, center, color);
     }
 
     createRandom(){ //ランダムにブロックを生成
@@ -27,5 +26,5 @@ class Factory{ //Factoryパターン
         }
         const type = this.bag.pop();
         return this.create(type);
-    } //シャッフルはメソッドとして分割するかも
+    }
 }

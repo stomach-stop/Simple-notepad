@@ -9,6 +9,7 @@ class Game{ //ゲームの制御
             this.poly,
             () => this.lock.resetLockDelay()
         );
+        this.effect = new EffectManager(board);
 
         //落下設定
         this.dropInterval = 1000; //落下間隔
@@ -25,14 +26,24 @@ class Game{ //ゲームの制御
         this.lock.updateLockDelay();
     }
 
+    giveItem(type){
+        const item = this.itemFactory.create(type);
+        this.item.setItem(item);
+    }
+
+    //ファザード
     move(dx, dy) { return this.mover.move(dx, dy) }
     rotateLeft() { return this.mover.rotateLeft() }
     rotateRight() { return this.mover.rotateRight() }
+
     spawnNext() { return this.poly.spawnNext()}
     swapHold() { return this.poly.swapHold() }
     updateGhost() { return this.poly.updateGhost() }
-    lockPiece() { return this.lock.lockPiece() }
-
     get current() { return this.poly.current }
     get ghost() { return this.poly.ghost }
+
+    lockPiece() { return this.lock.lockPiece() }
+
+    select(key) { return this.effect.select(key) }
+    detonate(size) { return this.effect.detonate(size) }
 }

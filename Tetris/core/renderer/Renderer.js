@@ -32,7 +32,7 @@ class Renderer{ //描画処理
         stroke(0);
         strokeWeight(1);
 
-        for(const [x, y] of polyomino.getPos()){
+        for(const [x, y] of polyomino.pos){
             rect(
                 x * this.blockSize,
                 y * this.blockSize,

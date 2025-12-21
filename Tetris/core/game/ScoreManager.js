@@ -64,12 +64,6 @@ class ScoreManager {
         }
     }
 
-    /*
-    isB2BTarget(lines, tspin){
-        return (tspin || lines == 4);
-    }
-    */
-
     updateLevel(lines){ //レベルアップ判定
         this.totalLines += lines;
         if(this.totalLines >= 10){

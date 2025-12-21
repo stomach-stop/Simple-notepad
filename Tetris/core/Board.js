@@ -11,10 +11,17 @@ class Board{
 
     }
 
+    isInside(x, y){ //座標が盤面内部か
+        return (
+            x >= 0 && x < this.width &&
+            y >= 0 && y < this.height
+        );
+    }
+
     fix(polyomino){ //ブロックを固定
         if(!this.canPlace(polyomino)) return false;
 
-        for(const [x, y] of polyomino.getPos()){
+        for(const [x, y] of polyomino.pos){
             if(
                 x >= 0 && x < this.width &&
                 y >= 0 && y < this.height
@@ -40,8 +47,13 @@ class Board{
         return {lines};
     }
 
+    clearCell(x, y){ //指定したセルを削除
+        if(!this.isInside(x, y)) return;
+        this.grid[y][x] = null;
+    }
+
     canPlace(polyomino){ //配置可能か
-        for(const [x, y] of polyomino.getPos()){
+        for(const [x, y] of polyomino.pos){
             if(y >= this.height) return false;
             if(x < 0 || x >= this.width) return false;
             if(y >= 0 && this.grid[y][x]) return false;

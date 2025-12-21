@@ -500,6 +500,13 @@ class Board{
 
     }
 
+    isInside(x, y){ //座標が盤面内部か
+        return (
+            x >= 0 && x < this.width &&
+            y >= 0 && y < this.height
+        );
+    }
+
     fix(polyomino){ //ブロックを固定
         if(!this.canPlace(polyomino)) return false;
 
@@ -514,23 +521,24 @@ class Board{
                 };
             }
         }
-        eventBus.emit("piece-locked", {type: polyomino.type});
     }
 
     clearLines(){ //埋まった行を削除
-        let linesCleared = 0;
+        let lines = 0;
         for(let y = this.height - 1; y >= 0; y--){
             if(this.grid[y].every(cell => cell)){
                 this.grid.splice(y, 1);
                 this.grid.unshift(Array(this.width).fill(null));
-                linesCleared++;
+                lines++;
                 y++;
             }
         }
-        if(linesCleared > 0){
-            eventBus.emit("line-clear", {lines: linesCleared});
-        }
-        return linesCleared;
+        return {lines};
+    }
+
+    clearCell(x, y){ //指定したセルを削除
+        if(!this.isInside(x, y)) return;
+        this.grid[y][x] = null;
     }
 
     canPlace(polyomino){ //配置可能か
@@ -540,10 +548,6 @@ class Board{
             if(y >= 0 && this.grid[y][x]) return false;
         }
         return true;
-    }
-    
-    canSpawn(polyomino){ //続行可能か
-        return this.canPlace(polyomino);
     }
 }
 

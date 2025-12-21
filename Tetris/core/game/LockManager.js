@@ -45,6 +45,8 @@ class LockManager{ //ブロックの固定制御
             mini: spin.mini
             */
         });
+
+        this.lockTimer = 0;
         this.poly.spawnNext();
 
         if(!this.board.canPlace(this.poly.current)){

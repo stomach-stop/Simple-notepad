@@ -6,6 +6,12 @@ class InputHandler{ //入力処理
         this.DAS = 150; //連続移動の遅延
         this.ARR = 30; //連続移動の間隔
         this.SDI = 50; //落下移動の間隔
+
+        this.bomb = null; //爆弾
+    }
+
+    setBlockSize(blockSize){
+        this.blockSize = blockSize;
     }
 
     update(){ //ブロックの連続移動処理
@@ -31,8 +37,8 @@ class InputHandler{ //入力処理
         }
     }
 
-    handle(key){
-        const game = this.manager.game;
+    handle(key){ //操作命令
+        const game = this.manager. game;
 
         switch(key){ //キーごとの操作
             case "w":
@@ -47,6 +53,9 @@ class InputHandler{ //入力処理
             case "e": game.rotateRight(); break;
             case "q": game.rotateLeft(); break;
             case "c": game.swapHold(); break;
+            default:
+                if('123456'.includes(key)) game.select(key);
+                break;
         }
         game.updateGhost();
     }
@@ -68,5 +77,9 @@ class InputHandler{ //入力処理
     onKeyUp(key){ //キー情報の削除
         key = key.toLowerCase();
         delete this.pressed[key];
+    }
+
+    useItem(){ //アイテムの使用命令
+        this.manager.game.detonate(this.blockSize);
     }
 }
