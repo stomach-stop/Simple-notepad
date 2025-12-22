@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tetris</title>
+
+<!-- p5.js -->
+<script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+
+<!-- core -->
+<script src="core/Board.js"></script>
+<script src="core/EventBus.js"></script>
+<script src="core/GameManager.js"></script>
+<script src="core/GameSetting.js"></script>
+<script src="core/InputHandler.js"></script>
+<script src="core/Memento.js"></script>
+
+<!-- core/game -->
+<script src="core/game/Game.js"></script>
+<script src="core/game/EffectManager.js"></script>
+<script src="core/game/LockManager.js"></script>
+<script src="core/game/MoveManager.js"></script>
+<script src="core/game/PolyManager.js"></script>
+
+<!-- core/renderer -->
+<script src="core/renderer/HoldView.js"></script>
+<script src="core/renderer/NextView.js"></script>
+<script src="core/renderer/Renderer.js"></script>
+<script src="core/renderer/ScoreView.js"></script>
+
+<!-- effect -->
+ <script src="effect/Effect.js"></script>
+<script src="effect/CrossBomb.js"></script>
+<script src="effect/GravityBomb.js"></script>
+<script src="effect/HorizontalBomb.js"></script>
+<script src="effect/SquareBomb.js"></script>
+<script src="effect/VerticalBomb.js"></script>
+
+<!-- state -->
+<script src="state/State.js"></script>
+<script src="state/PlayState.js"></script>
+<script src="state/MenuState.js"></script>
+<script src="state/GameOverState.js"></script>
+
+<!-- polyFactory -->
+<script src="polyFactory/PolyominoFactory.js"></script>
+<script src="polyFactory/TetrominoFactory.js"></script>
+<script src="polyFactory/PentominoFactory.js"></script>
+<script src="polyFactory/HexominoFactory.js"></script>
+
+<!-- polyomino -->
+<script src="polyomino/Polyomino.js"></script>
+<script src="polyomino/Tetromino.js"></script>
+<script src="polyomino/Pentomino.js"></script>
+<script src="polyomino/Hexomino.js"></script>
+
+<!-- strategy -->
+<script src="strategy/Strategy.js"></script>
+<script src="strategy/RandomStrategy.js"></script>
+<script src="strategy/SevenBagStrategy.js"></script>
+
+<!-- 最後に sketch.js（ルートにある想定） -->
+<script src="sketch.js"></script>
+</head>
+<body>
+</body>
+</html>
